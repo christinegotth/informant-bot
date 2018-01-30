@@ -1,6 +1,8 @@
 const yaml = require('js-yaml');
 const fs   = require('fs');
 const path = require('path');
+const S3 = require('aws-sdk/clients/s3');
+const request = require('request-promise-native');
 
 const required_env = [
     'FB_PAGETOKEN',
@@ -9,7 +11,21 @@ const required_env = [
     'CMS_API_URL',
 ];
 
+const load_s3 = (filename) => {
+    const params = {Bucket: 'wdr-tim-bot-env', 
+                    Key: 'staging/'+ filename}
+    const url = (new S3({region:'eu-central-1'})).getSignedUrl('getObject', params);
+    return request({uri:url, json:true});
+}
+
 const fetch_env = () => {
+    if ('CI' in process.env){
+        const myfile = load_s3('env.json').then((response)=>{
+            return response;
+        });                
+        return myfile;
+    }
+    
     const dotenv_path = path.resolve(__dirname, "../.env.yml");
     const environment = {};
     if(fs.existsSync(dotenv_path)) {
@@ -30,7 +46,10 @@ const fetch_env = () => {
     return environment;
 };
 
+
+
 module.exports.stage = () => {
-    return process.env.SLS_STAGE || fetch_env()['DEPLOY_ALIAS'] || 'dev';
+    return 'dev'; 
+    // process.env.SLS_STAGE || fetch_env()['DEPLOY_ALIAS'] || 'dev';
 };
 module.exports.env = fetch_env;
