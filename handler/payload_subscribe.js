@@ -63,6 +63,7 @@ module.exports.subscribe = function (chat, payload) {
         chat.addLabel('push-evening');
     }
     chat.sendText(`👍🏼 Bis später!`);
+    chat.sendList(elements);
 }
 
 module.exports.unsubscribe = function (chat, payload) {
